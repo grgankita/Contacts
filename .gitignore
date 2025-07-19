@@ -14,5 +14,7 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.
+
+.firebase/
 backend/firebase/  
 backend/routes/bstRoutes.js 
