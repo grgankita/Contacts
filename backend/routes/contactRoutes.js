@@ -5,6 +5,7 @@ import Contact from "../data-structures/contact.js";
 import AVLTree from "../data-structures/AVLTree.js"; // You'll create a new one per request here
 
 export default function createContactRoutes(contactTree) {
+  const router = express.Router();
   router.get("/", async (req, res) => {
     const sortBy = req.query.sortBy || "name_asc";
     const searchTerm = req.query.searchTerm || "";
