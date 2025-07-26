@@ -2,7 +2,7 @@ import express from "express";
 import admin from "firebase-admin";
 import db from "../firebase/firebaseConfig.js";
 import Contact from "../data-structures/contact.js";
-import AVLTree from "../data-structures/AVLTree.js"; // You'll create a new one per request here
+import AVLTree from "../data-structures/AVLTree.js";
 
 export default function createContactRoutes(contactTree) {
   const router = express.Router();
@@ -44,7 +44,6 @@ export default function createContactRoutes(contactTree) {
             (contact.phone && contact.phone.includes(searchTerm))
         );
       }
-
       res
         .status(200)
         .json(contactsToReturn.map((contact) => contact.toObject()));
@@ -101,7 +100,7 @@ export default function createContactRoutes(contactTree) {
         phone,
         email,
         address,
-        dateAdded: timestamp,
+        addedDate: timestamp,
         lastActivity: timestamp,
       };
 
@@ -157,7 +156,7 @@ export default function createContactRoutes(contactTree) {
           data.email,
           data.address,
           doc.id,
-          data.dateAdded?.toDate(),
+          data.addedDate?.toDate(),
           data.lastActivity?.toDate()
         ).toObject();
         res.status(200).json(foundContact);
@@ -174,9 +173,7 @@ export default function createContactRoutes(contactTree) {
     }
   });
 
-  // Update a contact by ID (PUT /contacts/:id)
   router.put("/:id", async (req, res) => {
-    // Path is now "/:id"
     const contactId = req.params.id;
     const { name, phone, email, address } = req.body;
 
@@ -196,41 +193,49 @@ export default function createContactRoutes(contactTree) {
           .json({ error: `Contact with ID "${contactId}" not found.` });
       }
 
-      const now = new Date();
+      const now = admin.firestore.Timestamp.now(); // CHANGED: Use Firestore Timestamp for consistency
       const updateData = {
         name,
         phone,
         email,
         address,
-        lastActivity: admin.firestore.Timestamp.fromDate(now), // Update last activity
+        lastActivity: now, // Update last activity
       };
+
       await contactRef.update(updateData);
-      // Fetch the updated document to get the latest state including original dateAdded
+
       const updatedDoc = await contactRef.get();
-      const updatedData = updatedDoc.data();
-      const contactToUpdateInTree = contactTree.search(updatedData.name);
+      const updatedFirestoreData = updatedDoc.data();
+
+      // CHANGED: Construct responseContact to match frontend's Contact interface
+      const responseContact = {
+        id: updatedDoc.id,
+        name: updatedFirestoreData.name,
+        phone: updatedFirestoreData.phone,
+        email: updatedFirestoreData.email,
+        address: updatedFirestoreData.address,
+        // Convert Firestore Timestamp to ISO string for 'addedDate'
+        addedDate: updatedFirestoreData.addedDate
+          ? updatedFirestoreData.addedDate.toDate().toISOString().split("T")[0]
+          : undefined,
+        lastActivity: updatedFirestoreData.lastActivity
+          ? updatedFirestoreData.lastActivity.toDate().toISOString()
+          : undefined,
+        nickname: updatedFirestoreData.nickname || "",
+        contactCount: updatedFirestoreData.contactCount || 0,
+      };
+
+      const contactToUpdateInTree = contactTree.search(
+        updatedFirestoreData.name
+      );
       if (contactToUpdateInTree) {
-        // Directly update properties on the Contact object within the tree node
-        contactToUpdateInTree.phone = updatedData.phone;
-        contactToUpdateInTree.email = updatedData.email;
-        contactToUpdateInTree.address = updatedData.address;
-        contactToUpdateInTree.lastActivity = now; // Update the Date object in the in-memory Contact
+        contactToUpdateInTree.phone = updatedFirestoreData.phone;
+        contactToUpdateInTree.email = updatedFirestoreData.email;
+        contactToUpdateInTree.address = updatedFirestoreData.address;
+        contactToUpdateInTree.lastActivity = now.toDate();
       }
 
-      const updatedContact = new Contact(
-        updatedData.name,
-        updatedData.phone,
-        updatedData.email,
-        updatedData.address,
-        updatedDoc.id,
-        updatedData.dateAdded?.toDate(),
-        updatedData.lastActivity?.toDate()
-      ).toObject();
-
-      res.status(200).json({
-        message: "Contact updated successfully",
-        contact: updatedContact,
-      });
+      res.status(200).json(responseContact);
     } catch (error) {
       console.error("Error updating contact:", error);
       res
@@ -270,7 +275,7 @@ export default function createContactRoutes(contactTree) {
         deletedContactData.email,
         deletedContactData.address,
         doc.id,
-        deletedContactData.dateAdded?.toDate(),
+        deletedContactData.addedDate?.toDate(),
         deletedContactData.lastActivity?.toDate()
       ).toObject();
 

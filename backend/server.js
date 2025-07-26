@@ -6,13 +6,16 @@ import AVLTree from "./data-structures/AVLTree.js";
 import createContactRoutes from "./routes/contactRoutes.js";
 import { populateContactTreeFromFirestore } from "./utils/startupLoader.js";
 
+export const contactTree = new AVLTree(); 
+contactTree.instanceId = Math.random().toString(36).substring(2, 15); // Add a unique ID
+async function initializeServer() {
+  try {
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
 }
-export const contactTree = new AVLTree(); 
-contactTree.instanceId = Math.random().toString(36).substring(2, 15); // Add a unique ID
+
 console.log(` Contact Tree Instance Created: ID ${contactTree.instanceId}`); // Log on creation
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -33,7 +36,7 @@ app.get("/", (req, res) => {
 // Mount the contact routes
 const contactRoutes = createContactRoutes(contactTree);
 app.use("/contacts", contactRoutes); 
-
+await populateContactTreeFromFirestore(contactTree);
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
@@ -43,9 +46,13 @@ app.listen(PORT, () => {
   console.log(`POST /contacts (body: {name, phone, email, address})`);
   console.log(`GET /contacts?sortBy=...&searchTerm=...`); 
   console.log(`GET /contacts/:id (get by Firestore ID)`);
-  console.log(
-    `PUT /contacts/:id (update by Firestore ID, body: {name, phone, email, address})`
+  console.log(`PUT /contacts/:id (update by Firestore ID, body: {name, phone, email, address})`
   );
   console.log(`DELETE /contacts/:id (delete by Firestore ID)`);
-  populateContactTreeFromFirestore(contactTree);
 });
+ } catch (error) {
+    console.error('Failed to initialize server:', error);
+    process.exit(1);
+  }
+}
+initializeServer();

@@ -102,29 +102,24 @@ export default class AVLTree extends BinarySearchTree {
   balance(node) {
     this.updateHeight(node);
     const balanceFactor = this.getBalanceFactor(node);
-
     // Left Left Case
     if (balanceFactor > 1 && this.getBalanceFactor(node.left) >= 0) {
       return this.rotateRight(node);
     }
-
     // Left Right Case
     if (balanceFactor > 1 && this.getBalanceFactor(node.left) < 0) {
       node.left = this.rotateLeft(node.left);
       return this.rotateRight(node);
     }
-
     // Right Right Case
     if (balanceFactor < -1 && this.getBalanceFactor(node.right) <= 0) {
       return this.rotateLeft(node);
     }
-
     // Right Left Case
     if (balanceFactor < -1 && this.getBalanceFactor(node.right) > 0) {
       node.right = this.rotateRight(node.right);
       return this.rotateLeft(node);
     }
-
     return node; // No rotation needed
   }
 
@@ -169,13 +164,13 @@ export default class AVLTree extends BinarySearchTree {
         console.warn(
           `AVLTree ${this.instanceId}: Contact with name "${contact.name}" already exists. Not inserting.`
         );
-        // this.size--; // No need to decrement here, as it was never incremented prematurely
-        return false; // Contact already exists
+        // this.size--;
+        return false;
       } else if (compareResult < 0) {
         if (currentNode.left === null) {
           currentNode.left = newNode;
           newNode.parent = currentNode;
-          this.size++; // <--- Increment size HERE when linked to the tree
+          this.size++;
           inserted = true;
           console.log(
             ` AVLTree ${this.instanceId}: Added ${contact.name} to left. New size: ${this.size}`

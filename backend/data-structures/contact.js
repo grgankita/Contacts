@@ -12,12 +12,30 @@ export default class Contact {
     this.phone = phone;
     this.email = email;
     this.address = address;
-    this.id = id; // Firestore ID
-    this.dateAdded = dateAdded;
-    this.lastActivity = lastActivity;
+    this.id = id;
+
+    // Convert Firestore Timestamp to JavaScript Date
+    if (dateAdded && typeof dateAdded.toDate === "function") {
+      this.dateAdded = dateAdded.toDate();
+    } else if (dateAdded instanceof Date) {
+      this.dateAdded = dateAdded;
+    } else if (typeof dateAdded === "string") {
+      this.dateAdded = new Date(dateAdded);
+    } else {
+      this.dateAdded = new Date();
+    }
+
+    if (lastActivity && typeof lastActivity.toDate === "function") {
+      this.lastActivity = lastActivity.toDate();
+    } else if (lastActivity instanceof Date) {
+      this.lastActivity = lastActivity;
+    } else if (typeof lastActivity === "string") {
+      this.lastActivity = new Date(lastActivity);
+    } else {
+      this.lastActivity = new Date();
+    }
   }
 
-  // ... other methods like toObject() ...
   toObject() {
     return {
       id: this.id,
@@ -25,7 +43,7 @@ export default class Contact {
       phone: this.phone,
       email: this.email,
       address: this.address,
-      dateAdded: this.dateAdded ? this.dateAdded.toISOString() : null, // Convert to string for JSON
+      addedDate: this.dateAdded ? this.dateAdded.toISOString() : null,
       lastActivity: this.lastActivity ? this.lastActivity.toISOString() : null,
     };
   }
