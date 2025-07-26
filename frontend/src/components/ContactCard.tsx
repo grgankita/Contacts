@@ -2,19 +2,24 @@
 import React from "react";
 import { Phone, Mail, MapPin, Trash2, Edit } from "lucide-react";
 import { Contact } from "../hooks/useContacts";
-
 interface ContactCardProps {
   contact: Contact;
   onEdit: (contact: Contact) => void;
   onDelete: (id: string, name: string) => void;
 }
-
 const ContactCard: React.FC<ContactCardProps> = ({
   contact,
   onEdit,
   onDelete,
 }) => {
+  if (!contact) {
+    console.warn("ContactCard received an undefined contact prop.");
+    return null; // Don't render anything if contact is undefined
+  }
   const getInitials = (name: string) => {
+    if (!name) {
+      return "?"; // Or a default character if name is missing
+    }
     const parts = name.split(" ");
     if (parts.length === 1) {
       return parts[0].charAt(0).toUpperCase();
@@ -23,10 +28,9 @@ const ContactCard: React.FC<ContactCardProps> = ({
       parts[0].charAt(0) + parts[parts.length - 1].charAt(0)
     ).toUpperCase();
   };
-  console.log("Rendering contact:", contact.dateAdded);
-
+  console.log("Rendering contact:", contact?.addedDate);
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col relative overflow-hidden transform transition duration-300 hover:scale-[1.02] hover:shadow-xl">
+    <div className="bg-white rounded-xl shadow-[0_0_20px_rgba(66,153,225,0.3)] p-6 flex flex-col relative overflow-hidden transform transition duration-300 hover:scale-[1.02] hover:shadow-xl">
       {/* Edit/Delete Icons */}
       <div className="absolute top-4 right-4 flex space-x-2">
         <button
@@ -81,8 +85,8 @@ const ContactCard: React.FC<ContactCardProps> = ({
       <div className="mt-6 pt-4 border-t border-gray-200 text-sm text-gray-500 flex justify-between">
         <span>
           Added:{" "}
-          {contact.dateAdded
-            ? new Date(contact.dateAdded).toLocaleDateString()
+          {contact.addedDate
+            ? new Date(contact.addedDate).toLocaleDateString()
             : "No date found"}
         </span>
 

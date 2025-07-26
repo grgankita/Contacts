@@ -26,7 +26,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       <input
         type={type}
         style={style}
-        className={`w-full py-2.5 pl-10 pr-3 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+        className={`w-full py-2.9 pl-10 pr-3 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
           className || ""
         }`}
         placeholder="Search contacts..."

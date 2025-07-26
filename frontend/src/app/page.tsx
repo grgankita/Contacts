@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useMemo } from "react";
 import { User, Settings, Plus } from "lucide-react";
 import { useContacts, Contact } from "../hooks/useContacts";
@@ -89,8 +88,8 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 font-inter text-gray-800">
-      <header className="bg-indigo-700 text-white py-3 px-6 flex items-center justify-between shadow-sm border-b border-blue-500">
+    <div className="min-h-screen bg-white font-inter text-gray-800">
+      <header className="bg-sky-100 text-blue-800 py-3 px-6 flex items-center justify-between shadow-sm border-b border-sky-50">
         <div className="flex items-center">
           <img
             src="/cms.svg"
@@ -108,7 +107,7 @@ export default function Home() {
             {contacts.length} contacts
           </span>
           <button className="p-1.5 rounded-md hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300 transition duration-200">
-            <Settings size={18} className="text-white" />
+            <Settings size={18} className="text-black" />
           </button>
         </div>
       </header>
@@ -116,7 +115,7 @@ export default function Home() {
       {/* Main Content Area */}
       <main className="w-full py-8 px-8 sm:px-6 lg:px-8">
         {/* Search, Sort, Add Section */}
-        <div className="bg-white p-6 rounded-xl shadow-xl mb-8 flex flex-col sm:flex-row sm:justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4 ">
+        <div className="bg-white p-6 rounded-xl shadow-[0_0_20px_rgba(66,153,225,0.3)] mb-8 flex flex-col sm:flex-row sm:justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4 ">
           <div className="flex justify-start space-x-4 w-[655px] ">
             {showSearch && (
               <SearchBar

@@ -12,7 +12,7 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
   onSortChange,
 }) => {
   return (
-    <div className="relative w-full sm:w-auto">
+    <div className="relative flex-grow w-full sm:w-auto min-w-[150px]">
       <select
         className="block appearance-none w-full bg-white border border-gray-300 text-gray-700 mr-20 py-3 px-4 pr-8 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition duration-200 shadow-sm cursor-pointer"
         value={sortBy}

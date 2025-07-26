@@ -1,27 +1,23 @@
 import { useState, useEffect, useCallback } from "react";
-import axios from "axios";
-
-// Define the shape of a Contact object
 export interface Contact {
   id: string;
   name: string;
   phone: string;
   email: string;
   address: string;
-  dateAdded?: string;
+  addedDate?: string;
   nickname?: string;
   contactCount?: number;
 }
 
 const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL;
-
 interface UseContactsResult {
   contacts: Contact[];
   loading: boolean;
   error: string | null;
   fetchContacts: () => Promise<void>;
   addContact: (
-    newContact: Omit<Contact, "id" | "dateAdded" | "nickname" | "contactCount">
+    newContact: Omit<Contact, "id" | "addedDate" | "nickname" | "contactCount">
   ) => Promise<boolean>;
   updateContact: (
     id: string,
@@ -39,9 +35,9 @@ export const useContacts = (
   const [error, setError] = useState<string | null>(null);
   const [currentSortBy, setCurrentSortBy] = useState<string>(initialSortBy);
 
-  // Function to fetch contacts from the backend
   const fetchContacts = useCallback(
     async (sortByOption: string = currentSortBy) => {
+      console.log("fetchContacts: Starting fetch with sort:", sortByOption); // DEBUG LOG
       try {
         setLoading(true);
         setError(null);
@@ -59,7 +55,6 @@ export const useContacts = (
         } else if (sortByOption === "alphabetical") {
           url = `${BACKEND_API_URL}/contacts?sortBy=name_asc`;
         }
-
         const response = await fetch(url);
         if (!response.ok) {
           const errorData = await response.json();
@@ -68,40 +63,46 @@ export const useContacts = (
           );
         }
         const data: Contact[] = await response.json();
+        console.log("fetchContacts: Data received from backend:", data);
+
         const enhancedData = data.map((contact) => {
-          console.log("Rendering contact:", contact.dateAdded);
+          // const rawDate =
+          //   (contact as any).dateAdded || (contact as any).addedDate;
+          const rawDate = (contact as any).addedDate;
+
+          const formattedDate = rawDate
+            ? new Date(rawDate).toLocaleDateString() // Format for display (e.g., "M/D/YYYY")
+            : "No date found"; // Default string if no date
+
           return {
             ...contact,
-            nickname: contact.name.split(" ")[0],
-            // addedDate: contact.dateAdded,
-            addedDate: contact.dateAdded
-              ? new Date(contact.dateAdded)
+            nickname: contact.name ? contact.name.split(" ")[0] : "",
+            addedDate: formattedDate,
+            contactCount:
+              contact.contactCount !== undefined
+                ? contact.contactCount
+                : Math.floor(Math.random() * 10) + 1,
+            lastActivity: (contact as any).lastActivity
+              ? new Date((contact as any).lastActivity).toISOString()
               : undefined,
-            contactCount: Math.floor(Math.random() * 10) + 1,
           };
         });
         setContacts(enhancedData);
-        console.log(" Enhanced contacts before setting state:");
-        enhancedData.forEach((c) =>
-          console.log(
-            c.name,
-            typeof c.addedDate,
-            c.addedDate instanceof Date,
-            c.addedDate
-          )
+        console.log(
+          "fetchContacts: Contacts state updated with:",
+          enhancedData
         );
-        console.log("Contacts from backend:", data);
       } catch (err: any) {
-        console.error("Failed to fetch contacts:", err);
+        console.error("fetchContacts: Failed to fetch contacts:", err); // DEBUG LOG
         setError(err.message);
       } finally {
         setLoading(false);
+        console.log("fetchContacts: Fetch operation finished."); // DEBUG LOG
       }
     },
     [currentSortBy]
   );
 
-  // Function to add a new contact
   const addContact = useCallback(
     async (
       newContact: Omit<
@@ -109,6 +110,7 @@ export const useContacts = (
         "id" | "addedDate" | "nickname" | "contactCount"
       >
     ): Promise<boolean> => {
+      console.log("addContact: Attempting to add new contact:", newContact); // DEBUG LOG
       try {
         setError(null);
         const response = await fetch(`${BACKEND_API_URL}/contacts`, {
@@ -124,10 +126,12 @@ export const useContacts = (
           );
         }
 
-        await fetchContacts(currentSortBy); // Re-fetch contacts with current sort order
+        console.log("addContact: Successfully added contact, re-fetching..."); // DEBUG LOG
+        await fetchContacts(currentSortBy);
+        console.log("addContact: Re-fetch completed."); // DEBUG LOG
         return true;
       } catch (err: any) {
-        console.error("Failed to add contact:", err);
+        console.error("addContact: Failed to add contact:", err); // DEBUG LOG
         setError(err.message);
         return false;
       }
@@ -135,9 +139,14 @@ export const useContacts = (
     [fetchContacts, currentSortBy]
   );
 
-  // Function to update an existing contact
   const updateContact = useCallback(
     async (id: string, updatedFields: Partial<Omit<Contact, "id">>) => {
+      console.log(
+        "updateContact: Attempting to update contact ID:",
+        id,
+        "with fields:",
+        updatedFields
+      ); // DEBUG LOG
       try {
         setError(null);
         const response = await fetch(`${BACKEND_API_URL}/contacts/${id}`, {
@@ -145,25 +154,39 @@ export const useContacts = (
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updatedFields),
         });
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(
             errorData.error || `HTTP error! status: ${response.status}`
           );
         }
+
         const data = await response.json();
+        console.log("updateContact: Backend response data:", data); // DEBUG LOG
+
         const updatedContact: Contact = {
-          ...data.contact,
-          nickname: data.contact.name.split(" ")[0],
-          addedDate: new Date(data.contact.dateAdded),
-          contactCount: Math.floor(Math.random() * 10) + 1, // Placeholder
+          ...data,
+          nickname: data.name ? data.name.split(" ")[0] : "",
+          addedDate: data.addedDate
+            ? new Date(data.addedDate).toISOString().split("T")[0]
+            : undefined,
+          contactCount: data.contactCount || Math.floor(Math.random() * 10) + 1,
         };
-        setContacts((prev) =>
-          prev.map((contact) => (contact.id === id ? updatedContact : contact))
-        );
+        console.log(
+          "updateContact: Processed updated contact for state:",
+          updatedContact
+        ); // DEBUG LOG
+
+        console.log(
+          "updateContact: Successfully updated contact, re-fetching all contacts..."
+        ); // DEBUG LOG
+        await fetchContacts(currentSortBy);
+        console.log("updateContact: Re-fetch completed."); // DEBUG LOG
+
         return true;
       } catch (err: any) {
-        console.error("Failed to update contact:", err);
+        console.error("updateContact: Failed to update contact:", err); // DEBUG LOG
         setError(err.message);
         return false;
       }
@@ -171,9 +194,14 @@ export const useContacts = (
     [fetchContacts, currentSortBy]
   );
 
-  // Function to delete a contact
   const deleteContact = useCallback(
     async (id: string, name: string): Promise<boolean> => {
+      console.log(
+        "deleteContact: Attempting to delete contact ID:",
+        id,
+        "Name:",
+        name
+      ); // DEBUG LOG
       try {
         if (!confirm(`Are you sure you want to delete ${name}?`)) {
           return false;
@@ -189,18 +217,23 @@ export const useContacts = (
             errorData.error || `HTTP error! status: ${response.status}`
           );
         }
+        console.log(
+          "deleteContact: Successfully deleted contact, re-fetching..."
+        ); // DEBUG LOG
         await fetchContacts(currentSortBy);
+        console.log("deleteContact: Re-fetch completed."); // DEBUG LOG
         return true;
       } catch (err: any) {
-        console.error("Failed to delete contact:", err);
+        console.error("deleteContact: Failed to delete contact:", err); // DEBUG LOG
         setError(err.message);
         return false;
       }
     },
     [fetchContacts, currentSortBy]
   );
+
   useEffect(() => {
-    fetchContacts(currentSortBy); // Call fetchContacts in current sort order
+    fetchContacts(currentSortBy);
   }, [fetchContacts, currentSortBy]);
 
   return {
